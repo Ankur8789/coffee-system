@@ -1,6 +1,10 @@
 package com.lld.models;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+
+import com.lld.services.InventoyObserver;
 
 public class Inventory {
 
@@ -8,8 +12,27 @@ public class Inventory {
 
     private HashMap<Ingredient, Integer> idegs;
 
+    // List of subscribers (Observers)
+    private List<InventoyObserver> admins;
+
     private Inventory() {
         this.idegs = new HashMap<>();
+        this.admins = new ArrayList<>();
+    }
+
+    // Attach an observer
+    public void addObserver(InventoyObserver observer) {
+        this.admins.add(observer);
+    }
+
+    // Broadcast to all attached observers
+    public void notifyAdmins(Ingredient ingredient, String message) {
+        for (InventoyObserver admin : admins) {
+            // Assuming your interface has a method named 'update' or 'onLowStock'
+            // Change this method call to match exactly what is in your InventoyObserver
+            // interface
+            admin.update(ingredient, message);
+        }
     }
 
     public void addItem(Ingredient ingredient, int amount, User user) {
@@ -33,31 +56,35 @@ public class Inventory {
         return inventory;
     }
 
-    public synchronized boolean getItems(HashMap<Ingredient, Integer> reqs, User user) {
+    // Removed the 'User user' parameter to fully decouple the class
+    public synchronized boolean getItems(HashMap<Ingredient, Integer> reqs) {
 
         boolean isOkay = true;
         for (Ingredient ingredient : reqs.keySet()) {
             if (!this.idegs.containsKey(ingredient)) {
                 System.out.println("Items not present in Inventory");
-                user.notify("Item : " + ingredient + "not available");
+                // Replaced direct user call with broadcast
+                notifyAdmins(ingredient, "Item : " + ingredient + " not available");
                 isOkay = false;
-            }
-            if (this.idegs.get(ingredient) < reqs.get(ingredient)) {
+            } else if (this.idegs.get(ingredient) < reqs.get(ingredient)) {
                 System.out.println("Items not present in Inventory");
-                user.notify("Item : " + ingredient + "is less available ! ");
+                // Replaced direct user call with broadcast
+                notifyAdmins(ingredient, "Item : " + ingredient + " is less available ! ");
                 isOkay = false;
             }
         }
+
         if (!isOkay) {
             return isOkay;
         }
 
         // sab available hai aur thik thak mamle me
-
         for (Ingredient ingredient : reqs.keySet()) {
             this.idegs.put(ingredient, this.idegs.get(ingredient) - reqs.get(ingredient));
+
             if (this.idegs.get(ingredient) < 10) {
-                user.notify("Item : " + ingredient + "is less available ! ");
+                // Replaced direct user call with broadcast
+                notifyAdmins(ingredient, "Item : " + ingredient + " is running low! ");
             }
         }
 

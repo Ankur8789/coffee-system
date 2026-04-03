@@ -84,7 +84,7 @@ public class VendingMachine implements CoffeeService {
         try {
 
             // see if there is ample amount of ingredients
-            boolean isPossible = inventory.getItems(coffee.getIngredients(), admin);
+            boolean isPossible = inventory.getItems(coffee.getIngredients());
             if (!isPossible || (coffee.getAmount() > amount)) {
                 throw new Exception();
             }
